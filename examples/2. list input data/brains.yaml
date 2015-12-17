@@ -1,0 +1,2 @@
+run: python list_data.py $INPUT
+contents:
