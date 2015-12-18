@@ -64,3 +64,6 @@ db.sqlite
 
 # importd
 secret.txt
+
+# Celery
+celerybeat-schedule

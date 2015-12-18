@@ -1,2 +1,0 @@
-run: python list_data.py $INPUT
-content: list_data.py
