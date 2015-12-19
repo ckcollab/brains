@@ -1,0 +1,2 @@
+cd src && python app collectstatic --noinput
+cd src && python app migrate
