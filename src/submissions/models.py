@@ -13,7 +13,7 @@ class Submission(models.Model):
     stdout = models.TextField(null=True, blank=True)
     stderr = models.TextField(null=True, blank=True)
     languages = models.CharField(max_length=64, default='')
-    dataset = models.CharField(max_length=64, null=True, blank=True)
+    dataset = models.ForeignKey('datasets.Dataset', null=True, blank=True)
 
     @property
     def json_short(self):

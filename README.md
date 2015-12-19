@@ -1,9 +1,23 @@
 # brains
 
+It thinks!
 
-TODO:
+# setup
 
-- [ ] Accept file from user, saves in DB
-- [ ] Celery task to process file
-- [ ] stdout saved from celery task
-- [ ] streaming http response? show real time results!!
+```brew install memcached```
+
+```pip install -r requirements.txt```
+
+# running
+
+Server
+
+```cd src && python app.py```
+
+Celery task running
+
+```cd src && celery -A workers worker -l INFO```
+
+# tests
+
+```cd src && python app.py tests```

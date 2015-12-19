@@ -61,12 +61,12 @@ else:
         }
     }
 
-#settings.CELERY_RESULT_BACKEND = 'djcelery.backends.cache:CacheBackend'
-
 
 ##############################################################################
 # Helpers
 def _yield_submission_output(submission_id):
+    yield ""  # yield something immediately for the connection to start on the cli for nicer printing
+
     while True:
         stdout = cache.get("submission-%s-stdout" % submission_id)
         stderr = cache.get("submission-%s-stderr" % submission_id)
@@ -75,7 +75,8 @@ def _yield_submission_output(submission_id):
             ("submission-%s-stdout" % submission_id, "submission-%s-stderr" % submission_id)
         )
 
-        # Don't want someone accidentally breaking our format where each messag ends with \r, so get rid of them
+        # Don't want someone accidentally breaking our format where each message ends with \r, so get rid of them
+        # The \r signifies the end of a message (so messages aren't merged together as they're streamed/chunked)
         if stdout:
             stdout = stdout.replace("\r", "")
         if stderr:
@@ -85,7 +86,11 @@ def _yield_submission_output(submission_id):
             yield json.dumps({
                 "stdout": stdout,
                 "stderr": stderr,
-            }) + "\r"
+            }) + "\r"  # Note we add carriage return at the very end to signify the end of a message, useful
+                       # because we're chunking data and sending it in parts, need to know when it ends!
+
+        print "Reading!!!!!", stdout
+
         if stdout is not None and "-%-%-%-%-END BRAIN SEQUENCE-%-%-%-%-" in stdout:
             # We don't check for a timeout here... I think that's OK since it's terminated when user view
             # yielding from this generator???
@@ -97,6 +102,7 @@ def _yield_submission_output(submission_id):
 # Views
 #
 # Have to do model imports here AFTER d settings
+from datasets.models import Dataset
 from participants.models import Participant
 from submissions.models import Submission
 from workers.tasks import run
@@ -123,27 +129,45 @@ def submit(request):
     name - Name of submitter
     description -
     languages -
-    dataset -
+    dataset - Name of dataset to use
     submission - Zip file containing submission contents
     wait -
     """
     if request.method == "POST":
+        # Validate
         required_fields = ("name", "description", "languages", "dataset", "wait",)
         if any(field not in request.POST for field in required_fields):
             return JsonResponse({
-                "error": "Missing one of the required fields: %s" % (required_fields,)
+                "error": "missing one of the required fields: %s" % (required_fields,)
             }, status=400)
         if len(request.FILES) == 0:
             return JsonResponse({
-                "error": "No file was uploaded?"
+                "error": "no file was uploaded?"
             }, status=400)
 
+        # Get dataset
+        print "got dataset", request.POST["dataset"]
+
+        dataset = None
+        if request.POST["dataset"]:
+            try:
+                dataset = Dataset.objects.get(name=request.POST["dataset"])
+            except Dataset.DoesNotExist:
+                return JsonResponse({
+                    "error": 'could not find dataset named "%s"' % request.POST["dataset"]
+                }, status=400)
+
+        # Get participant
         participant, _ = Participant.objects.get_or_create(name=request.POST["name"])
+
+        # Save it
         submission = Submission.objects.create(
             participant=participant,
             zip_file=request.FILES["zip_file"],
+            dataset=dataset,
         )
 
+        # Run it (and then return immediately or stream data back)
         run.delay(submission.pk)
         if request.POST["wait"]:
             return StreamingHttpResponse(_yield_submission_output(submission.pk))

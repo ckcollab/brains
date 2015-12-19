@@ -5,3 +5,4 @@ celery==3.1.19
 waitress==0.8.9
 python-binary-memcached
 django-bmemcached
+pyyaml==3.11
