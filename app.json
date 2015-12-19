@@ -1,6 +1,9 @@
 {
   "name": "brains",
   "repository": "https://github.com/dev-coop/brains",
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "settings.production"
+  },
   "addons": [
     "cloudamqp:lemur",
     "heroku-postgresql:hobby-dev",

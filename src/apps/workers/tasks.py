@@ -134,8 +134,9 @@ def run(submission_id, dataset_id):
     process_args = config["run"]
 
     # Replace dataset path
-    dataset_path = os.path.join(DATASET_CACHE_DIR, str(submission.dataset.uuid))
-    process_args = process_args.replace("$INPUT", dataset_path)
+    if submission.dataset:
+        dataset_path = os.path.join(DATASET_CACHE_DIR, str(submission.dataset.uuid))
+        process_args = process_args.replace("$INPUT", dataset_path)
 
     # Make python not buffer output otherwise user may think nothing is happening
     os.environ.setdefault('PYTHONUNBUFFERED', '1')
