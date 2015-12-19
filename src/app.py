@@ -45,6 +45,21 @@ if DATABASE_URL:
     settings.DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
 if ON_HEROKU:
     settings.DEBUG = False
+    settings.LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            },
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
+            },
+        },
+    }
 
 MEMCACHEDCLOUD_SERVERS = os.environ.get('MEMCACHEDCLOUD_SERVERS')
 
