@@ -13,7 +13,11 @@ it thinks!
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
-then...
+then... on the app dashboard enable `web` for the site/queuing and `worker` to processes 
+tasks.
+
+You can then go to your heroku app -> settings -> "reveal config vars" and point your worker
+to a different queue.
 
 # running
 

@@ -1,4 +1,9 @@
 {
   "name": "brains",
   "repository": "https://github.com/dev-coop/brains",
+  "addons": [
+    "cloudamqp:little-lemur",
+    "heroku-postgresql:hobby-dev",
+    "memcachedcloud:30"
+  ]
 }
