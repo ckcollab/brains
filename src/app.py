@@ -198,5 +198,4 @@ def submission_detail(request, pk):
 
 
 if __name__ == "__main__":
-
     d.main()
