@@ -1,6 +1,6 @@
 # brains
 
-It thinks!
+it thinks!
 
 # setup
 
@@ -21,3 +21,10 @@ Celery task running
 # tests
 
 ```cd src && python app.py tests```
+
+# todo
+
+ - [ ] test on heroku
+ - [ ] setup one click deploy
+ - [ ] add cli `get` command
+ - [ ] save stdout/stderr from submissions... streamed and lost right now...
