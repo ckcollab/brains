@@ -1,5 +1,6 @@
 # Make directory for static files
 mkdir -p src/static
 
-cd src && python app.py collectstatic --noinput
-cd src && python app.py migrate
+cd src
+python app.py collectstatic --noinput
+python app.py migrate
