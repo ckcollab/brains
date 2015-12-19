@@ -25,7 +25,7 @@ DATASET_CACHE_DIR = '/tmp/brains_temp_dataset_cache_storage/'
 SUBMISSION_TEMP_STORAGE_DIR = '/tmp/brains_temp_submission_storage/'
 
 
-def enqueue_output(buffer, queue):
+def _enqueue_output(buffer, queue):
     for buffer_string in iter(buffer.readline, b''):
     #for buffer_string in iter(lambda: buffer.read(128), b''):  # just in case we want to read without newlines
         queue.put(buffer_string)
@@ -37,7 +37,7 @@ class BufferMonitor(object):
     it with new data from the buffer"""
     def __init__(self, buffer, cache_key):
         self.queue = Queue()
-        self.thread = Thread(target=enqueue_output, args=(buffer, self.queue))
+        self.thread = Thread(target=_enqueue_output, args=(buffer, self.queue))
         self.thread.daemon = True  # thread dies with the program
         self.thread.start()
         self.buffer = ''
@@ -84,11 +84,11 @@ class ExecutionTimeLimitExceeded(Exception):
     pass
 
 
-def alarm_handler(signum, frame):
+def _alarm_handler(signum, frame):
     raise ExecutionTimeLimitExceeded
 
 
-def extract_submission_return_config(submission, dataset):
+def _extract_submission_return_config(submission, dataset):
     """returns the configuration for the submission"""
     if os.path.exists(SUBMISSION_TEMP_STORAGE_DIR):
         # Remove temp storage so we don't run out of space on the server or something
@@ -106,6 +106,9 @@ def extract_submission_return_config(submission, dataset):
 
     config_path = os.path.join(SUBMISSION_TEMP_STORAGE_DIR, CONFIG_FILE)
     return yaml.load(open(config_path).read(), Loader=yaml.loader.BaseLoader)
+
+
+#def
 
 
 ##############################################################################
@@ -127,21 +130,26 @@ def run(submission_id, dataset_id):
         cache.set("submission-%s-stderr" % submission_id, "Could not find a dataset with this ID (%s)" % dataset_id)
         return
 
-    signal.signal(signal.SIGALRM, alarm_handler)
-    signal.alarm(60 * 10)  # require an "alarm" return signal within 10 min or force close
-
-    config = extract_submission_return_config(submission, dataset)
+    config = _extract_submission_return_config(submission, dataset)
     process_args = config["run"]
+
+    # Make python not buffer output otherwise user may think nothing is happening
+    os.environ.setdefault('PYTHONUNBUFFERED', '1')
 
     # Replace dataset path
     if submission.dataset:
         dataset_path = os.path.join(DATASET_CACHE_DIR, str(submission.dataset.uuid))
         process_args = process_args.replace("$INPUT", dataset_path)
-
-    # Make python not buffer output otherwise user may think nothing is happening
-    os.environ.setdefault('PYTHONUNBUFFERED', '1')
+        submission_name_centered = (" dataset: %s " % submission.dataset.name).center(80, "=")
+        cache.set("submission-%s-stdout" % submission_id, "\n%s\n\n\r" % submission_name_centered)
+    else:
+        no_dataset_msg_centered = " no dataset used ".center(80, "=")
+        cache.set("submission-%s-stdout" % submission_id, "\n%s\n\n\r" % no_dataset_msg_centered)
 
     print "Running submission (%s) with args %s" % (submission_id, process_args)
+
+    signal.signal(signal.SIGALRM, _alarm_handler)
+    signal.alarm(60 * 10)  # require an "alarm" return signal within 10 min or force close
 
     try:
         process = subprocess.Popen(
@@ -153,6 +161,7 @@ def run(submission_id, dataset_id):
         )
         stdout_monitor = BufferMonitor(process.stdout, "submission-%s-stdout" % submission_id)
         stderr_monitor = BufferMonitor(process.stderr, "submission-%s-stderr" % submission_id)
+
         exit_code = None
         while exit_code is None:
             stdout_monitor.check_queue_then_cache()

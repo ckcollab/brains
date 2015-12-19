@@ -35,9 +35,10 @@ celery task runner
 
 # todo
 
- - [ ] test on heroku
- - [ ] setup one click deploy
+ - [x] test on heroku
+ - [x] setup one click deploy
  - [ ] add cli `get` command
  - [ ] save stdout/stderr from submissions... streamed and lost right now...
  - [ ] time submissions
  - [ ] support multiple datasets
+    - [ ] send cool stdout =============== <NAME> ===============
