@@ -35,3 +35,4 @@ celery task runner
  - [ ] setup one click deploy
  - [ ] add cli `get` command
  - [ ] save stdout/stderr from submissions... streamed and lost right now...
+ - [ ] support multiple datasets
