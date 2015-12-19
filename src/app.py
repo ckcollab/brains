@@ -39,9 +39,12 @@ d(
 from django.conf import settings
 
 DATABASE_URL = os.environ.get("DATABASE_URL", None)
+ON_HEROKU = DATABASE_URL
 if DATABASE_URL:
     import dj_database_url
     settings.DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
+if ON_HEROKU:
+    settings.DEBUG = False
 
 MEMCACHEDCLOUD_SERVERS = os.environ.get('MEMCACHEDCLOUD_SERVERS')
 
