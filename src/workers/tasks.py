@@ -33,6 +33,8 @@ def enqueue_output(buffer, queue):
 
 
 class BufferMonitor(object):
+    """Keeps track of stdout/stderr for running tasks, puts the data in a cache until it's removed, then replaces
+    it with new data from the buffer"""
     def __init__(self, buffer, cache_key):
         self.queue = Queue()
         self.thread = Thread(target=enqueue_output, args=(buffer, self.queue))
