@@ -38,6 +38,10 @@ d(
 
 from django.conf import settings
 
+DATABASE_URL = os.environ.get("DATABASE_URL", None)
+if DATABASE_URL:
+    import dj_database_url
+    settings.DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
 
 MEMCACHEDCLOUD_SERVERS = os.environ.get('MEMCACHEDCLOUD_SERVERS')
 
