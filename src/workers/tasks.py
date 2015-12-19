@@ -59,14 +59,23 @@ class BufferMonitor(object):
             self.set_cache_if_cache_clear()
 
     def wait_until_cache_clear(self):
+        # timeout is 10 seconds to wait for cache to clear after program has exited
+        timeout = 10
+        start = time.time()
+
         # clear queue
         while self.queue.qsize() > 0:
             self.check_queue_then_cache()
+            if (time.time() - start) > timeout:
+                raise Exception("Timed out clearing queue???")
 
         # clear buffer
         while self.buffer:
             self.set_cache_if_cache_clear()
-            time.sleep(0.1)
+            time.sleep(1)  # long sleeps since the other side is prob dead not worth thrashing
+            if (time.time() - start) > timeout:
+                # No one is reading from this buffer, they left?!
+                return
 
 
 class ExecutionTimeLimitExceeded(Exception):
