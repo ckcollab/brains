@@ -89,7 +89,7 @@ def _yield_submission_output(submission_id):
             }) + "\r"  # Note we add carriage return at the very end to signify the end of a message, useful
                        # because we're chunking data and sending it in parts, need to know when it ends!
 
-        print "Reading!!!!!", stdout
+        #print "Reading!!!!!", stdout
 
         if stdout is not None and "-%-%-%-%-END BRAIN SEQUENCE-%-%-%-%-" in stdout:
             # We don't check for a timeout here... I think that's OK since it's terminated when user view
@@ -168,7 +168,7 @@ def submit(request):
         )
 
         # Run it (and then return immediately or stream data back)
-        run.delay(submission.pk)
+        run.delay(submission.pk, submission.dataset.pk if submission.dataset else None)
         if request.POST["wait"]:
             return StreamingHttpResponse(_yield_submission_output(submission.pk))
         else:

@@ -13,6 +13,7 @@ from threading import Thread
 from Queue import Queue, Empty
 from zipfile import ZipFile
 
+from datasets.models import Dataset
 from submissions.models import Submission
 
 
@@ -76,7 +77,7 @@ def alarm_handler(signum, frame):
     raise ExecutionTimeLimitExceeded
 
 
-def extract_submission_return_config(submission):
+def extract_submission_return_config(submission, dataset):
     """returns the configuration for the submission"""
     if os.path.exists(SUBMISSION_TEMP_STORAGE_DIR):
         # Remove temp storage so we don't run out of space on the server or something
@@ -85,10 +86,11 @@ def extract_submission_return_config(submission):
     zip_file = ZipFile(submission.zip_file)
     zip_file.extractall(SUBMISSION_TEMP_STORAGE_DIR)
 
-    if submission.dataset:
-        dataset_path = os.path.join(DATASET_CACHE_DIR, str(submission.dataset.uuid))
+    if dataset:
+        print "submission dataset: ", dataset.name
+        dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
         if not os.path.exists(dataset_path):
-            zip_file = ZipFile(submission.zip_file)
+            zip_file = ZipFile(dataset.file)
             zip_file.extractall(dataset_path)
 
     config_path = os.path.join(SUBMISSION_TEMP_STORAGE_DIR, CONFIG_FILE)
@@ -98,17 +100,26 @@ def extract_submission_return_config(submission):
 ##############################################################################
 # The big kahuna, the submission runner
 @task
-def run(submission_id):
+def run(submission_id, dataset_id):
     try:
         submission = Submission.objects.get(pk=submission_id)
     except Submission.DoesNotExist:
-        cache.set("submission-%s-stderr" % submission_id, "Could not find a task with this ID (%s)" % submission_id)
+        cache.set("submission-%s-stderr" % submission_id, "Could not find a submission with this ID (%s)" % submission_id)
+        return
+
+    try:
+        if dataset_id:
+            dataset = Dataset.objects.get(pk=dataset_id)
+        else:
+            dataset = None
+    except Submission.DoesNotExist:
+        cache.set("submission-%s-stderr" % submission_id, "Could not find a dataset with this ID (%s)" % dataset_id)
         return
 
     signal.signal(signal.SIGALRM, alarm_handler)
     signal.alarm(60 * 10)  # require an "alarm" return signal within 10 min or force close
 
-    config = extract_submission_return_config(submission)
+    config = extract_submission_return_config(submission, dataset)
     process_args = config["run"]
 
     # Replace dataset path

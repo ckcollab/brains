@@ -4,9 +4,16 @@ it thinks!
 
 # setup
 
+### local
 ```brew install memcached```
 
 ```pip install -r requirements.txt```
+
+### heroku
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+then...
 
 # running
 
