@@ -10,11 +10,11 @@ it thinks!
 
 # running
 
-Server
+django server
 
 ```cd src && python app.py```
 
-Celery task running
+celery task runner
 
 ```cd src && celery -A workers worker -l INFO```
 
