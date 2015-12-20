@@ -2,9 +2,9 @@
 
 it thinks!
 
-# using it
+## using it
 
-install the [cli](http://github.com/dev-coop/brains-cli)
+#### install the [cli](http://github.com/dev-coop/brains-cli)
 ```
 # Install everything
 $ pip install brains
@@ -12,12 +12,12 @@ $ mkdir experiment
 $ cd experiment
 ```
 
-make an example program
+#### make an example program
 ```
 $ echo "print 'hello world'" >> run.py
 ```
 
-configure brains
+#### configure brains
 ```
 $ brains init
 Give me your brains, I mean name: Eric Carmichael
@@ -38,7 +38,7 @@ name: 'Eric Carmichael'
 run: 'python run.py $INPUT'
 ```
 
-run the program
+#### run the program
 ```
 $ brains push
 zipping...done
@@ -52,14 +52,33 @@ hello world
 
 ```
 
-# setup server
+#### run with datasets
+your program can be ran multiple times at once vs many datasets
+```
+$ brains push --dataset test,test2
+zipping...done
+sending to server...done
 
-### local
+Output:                                                                       
+
+=================================== test =======================================
+
+hello world
+
+=================================== test2 ======================================
+
+hello world
+
+```
+
+## setup server
+
+#### local
 ```brew install memcached```
 
 ```pip install -r requirements.txt```
 
-### heroku
+#### heroku
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
 
@@ -69,7 +88,7 @@ tasks.
 You can then go to your heroku app -> settings -> "reveal config vars" and point your worker
 to a different queue.
 
-# running
+#### running
 
 django server
 
@@ -79,11 +98,11 @@ celery task runner
 
 ```cd src && celery -A workers worker -l INFO```
 
-# tests
+#### tests
 
 ```cd src && python app.py tests```
 
-# todo
+#### todo
 
  - [x] test on heroku
  - [x] setup one click deploy
