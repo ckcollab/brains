@@ -2,7 +2,8 @@
   "name": "brains",
   "repository": "https://github.com/dev-coop/brains",
   "env": {
-    "DJANGO_SETTINGS_MODULE": "settings.production"
+    "DJANGO_SETTINGS_MODULE": "settings.production",
+    "PYTHONPATH": "/app/.heroku/miniconda/lib/python2.7/site-packages/:/app/"
   },
   "addons": [
     "cloudamqp:lemur",
