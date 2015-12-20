@@ -71,13 +71,14 @@ def create(request):
         # Get dataset
         datasets = []
         if request.POST["datasets"]:
-            print "got datasets", request.POST.getlist("datasets")
-            try:
-                [datasets.append(d) for d in Dataset.objects.filter(name__in=request.POST.getlist("datasets"))]
-            except Dataset.DoesNotExist:
-                return JsonResponse({
-                    "error": 'could not find dataset named "%s"' % request.POST["dataset"]
-                }, status=400)
+            dataset_names = request.POST.getlist("datasets")
+            for name in dataset_names:
+                try:
+                    datasets.append(Dataset.objects.get(name=name))
+                except Dataset.DoesNotExist:
+                    return JsonResponse({
+                        "error": 'could not find dataset named "%s"' % name
+                    }, status=400)
 
         # Get participant
         participant, _ = Participant.objects.get_or_create(name=request.POST["name"])

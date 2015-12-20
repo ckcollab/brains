@@ -48,7 +48,7 @@ class BufferMonitor(object):
         thread.start()
 
     def queue_message(self, message):
-        self.queue.put(message)
+        self.queue.put("%s\r" % message)  # make sure we include 'end of message' character
 
     def set_cache_if_cache_clear(self):
         # Check if cache is empty, if so we can put something there!
@@ -122,6 +122,19 @@ def _extract_dataset(dataset):
 
 def do_codejail_stuff():
     # TODO: Make this work
+    # TODO: make it so they cant read env vars
+    # TODO: make it so they cant do anything outside /tmp
+
+
+
+
+
+
+
+
+
+
+
 
     #pip install docker-py
     #output_generator = docker.logs("container", stdout=True, stderr=True, stream=True)
@@ -181,10 +194,10 @@ def run(submission_id):
             dataset_path = _extract_dataset(dataset)
             process_args = process_args.replace("$INPUT", dataset_path)
             submission_name_centered = (" dataset: %s " % dataset.name).center(80, "=")
-            stdout_monitor.queue_message("\n%s\n\n\r" % submission_name_centered)
+            stdout_monitor.queue_message("\n%s\n\n" % submission_name_centered)
         else:
             no_dataset_msg_centered = " no dataset used ".center(80, "=")
-            stdout_monitor.queue_message("\n%s\n\n\r" % no_dataset_msg_centered)
+            stdout_monitor.queue_message("\n%s\n\n" % no_dataset_msg_centered)
 
         print "Running submission (%s) with args %s on dataset %s" % (submission_id, process_args, dataset)
 
@@ -228,7 +241,7 @@ def run(submission_id):
             # Reset the alarm, 0 means no "alarm" signal is required to respond
             signal.alarm(0)
 
-    print "finished! duration:", submission.duration
+    print "finished! duration: %s" % submission.duration
     # Sometimes app doesn't finish clearing output so let's clean up the buffers
     stderr_monitor.wait_until_cache_clear()  # stderr first so stdout end message arrives last!
     stdout_monitor.queue_message("\ntotal duration -> %s\n\n" % submission.duration)

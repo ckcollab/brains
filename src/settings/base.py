@@ -28,6 +28,7 @@ INSTALLED_APPS = (
 
     # 3rd-party apps.
     "storages",
+    's3direct',
 )
 OUR_APPS = (
     "participants",
@@ -170,6 +171,11 @@ DEFAULT_FILE_STORAGE = 'storages.backends.s3boto.S3BotoStorage'
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+S3DIRECT_REGION = 'us-west-2'
+S3DIRECT_DESTINATIONS = {
+    # Allow staff users to upload any MIME type
+    'datasets': ('datasets/', lambda u: u.is_staff,),
+}
 
 CACHES = {
     'default': {

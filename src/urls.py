@@ -8,5 +8,6 @@ urlpatterns = [
     url(r'^submissions/', include('submissions.urls', namespace='submissions')),
     # url(r'', include('workers.urls', namespace='workers')),
 
+    url(r'^s3direct/', include('s3direct.urls')),
     url(r'^admin/', include(admin.site.urls)),
 ]
