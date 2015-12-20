@@ -58,7 +58,7 @@ def create(request):
     """
     if request.method == "POST":
         # Validate
-        required_fields = ("name", "description", "languages", "dataset", "wait",)
+        required_fields = ("name", "description", "languages", "datasets", "wait",)
         if any(field not in request.POST for field in required_fields):
             return JsonResponse({
                 "error": "missing one of the required fields: %s" % (required_fields,)
@@ -69,12 +69,11 @@ def create(request):
             }, status=400)
 
         # Get dataset
-        print "got dataset", request.POST["dataset"]
-
-        dataset = None
-        if request.POST["dataset"]:
+        datasets = []
+        if request.POST["datasets"]:
+            print "got datasets", request.POST.getlist("datasets")
             try:
-                dataset = Dataset.objects.get(name=request.POST["dataset"])
+                [datasets.append(d) for d in Dataset.objects.filter(name__in=request.POST.getlist("datasets"))]
             except Dataset.DoesNotExist:
                 return JsonResponse({
                     "error": 'could not find dataset named "%s"' % request.POST["dataset"]
@@ -87,11 +86,12 @@ def create(request):
         submission = Submission.objects.create(
             participant=participant,
             zip_file=request.FILES["zip_file"],
-            dataset=dataset,
         )
+        for dataset in datasets:
+            submission.datasets.add(dataset)
 
         # Run it (and then return immediately or stream data back)
-        run.delay(submission.pk, submission.dataset.pk if submission.dataset else None)
+        run.delay(submission.pk)
         if request.POST["wait"]:
             return StreamingHttpResponse(_yield_submission_output(submission.pk))
         else:

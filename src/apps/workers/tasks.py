@@ -13,6 +13,8 @@ from threading import Thread
 from Queue import Queue, Empty
 from zipfile import ZipFile
 
+from django.utils import timezone
+
 from datasets.models import Dataset
 from submissions.models import Submission
 
@@ -35,13 +37,18 @@ def _enqueue_output(buffer, queue):
 class BufferMonitor(object):
     """Keeps track of stdout/stderr for running tasks, puts the data in a cache until it's removed, then replaces
     it with new data from the buffer"""
-    def __init__(self, buffer, cache_key):
+    def __init__(self, cache_key):
         self.queue = Queue()
-        self.thread = Thread(target=_enqueue_output, args=(buffer, self.queue))
-        self.thread.daemon = True  # thread dies with the program
-        self.thread.start()
-        self.buffer = ''
         self.cache_key = cache_key
+        self.buffer = ''
+
+    def monitor(self, buffer):
+        thread = Thread(target=_enqueue_output, args=(buffer, self.queue))
+        thread.daemon = True  # thread dies with the program
+        thread.start()
+
+    def queue_message(self, message):
+        self.queue.put(message)
 
     def set_cache_if_cache_clear(self):
         # Check if cache is empty, if so we can put something there!
@@ -88,7 +95,7 @@ def _alarm_handler(signum, frame):
     raise ExecutionTimeLimitExceeded
 
 
-def _extract_submission_return_config(submission, dataset):
+def _extract_submission_return_config(submission):
     """returns the configuration for the submission"""
     if os.path.exists(SUBMISSION_TEMP_STORAGE_DIR):
         # Remove temp storage so we don't run out of space on the server or something
@@ -96,96 +103,111 @@ def _extract_submission_return_config(submission, dataset):
     os.mkdir(SUBMISSION_TEMP_STORAGE_DIR)
     zip_file = ZipFile(submission.zip_file)
     zip_file.extractall(SUBMISSION_TEMP_STORAGE_DIR)
-
-    if dataset:
-        print "submission dataset: ", dataset.name
-        dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
-        if not os.path.exists(dataset_path):
-            zip_file = ZipFile(dataset.file)
-            zip_file.extractall(dataset_path)
-
     config_path = os.path.join(SUBMISSION_TEMP_STORAGE_DIR, CONFIG_FILE)
     return yaml.load(open(config_path).read(), Loader=yaml.loader.BaseLoader)
 
 
-#def
+def _extract_dataset(dataset):
+    """returns the dataset dir"""
+    dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
+    if not os.path.exists(dataset_path):
+        zip_file = ZipFile(dataset.file)
+        zip_file.extractall(dataset_path)
+    return dataset_path
 
 
 ##############################################################################
 # The big kahuna, the submission runner
 @task
-def run(submission_id, dataset_id):
+def run(submission_id):
     try:
         submission = Submission.objects.get(pk=submission_id)
     except Submission.DoesNotExist:
         cache.set("submission-%s-stderr" % submission_id, "Could not find a submission with this ID (%s)" % submission_id)
         return
 
-    try:
-        if dataset_id:
-            dataset = Dataset.objects.get(pk=dataset_id)
-        else:
-            dataset = None
-    except Submission.DoesNotExist:
-        cache.set("submission-%s-stderr" % submission_id, "Could not find a dataset with this ID (%s)" % dataset_id)
-        return
+    # try:
+    #     if dataset_ids:
+    #         dataset = Dataset.objects.get(pk=dataset_id)
+    #     else:
+    #         dataset = None
+    # except Submission.DoesNotExist:
+    #     cache.set("submission-%s-stderr" % submission_id, "Could not find a dataset with this ID (%s)" % dataset_id)
+    #     return
 
-    config = _extract_submission_return_config(submission, dataset)
-    process_args = config["run"]
+    stdout_monitor = BufferMonitor("submission-%s-stdout" % submission_id)
+    stderr_monitor = BufferMonitor("submission-%s-stderr" % submission_id)
+
+    config = _extract_submission_return_config(submission)
 
     # Make python not buffer output otherwise user may think nothing is happening
     os.environ.setdefault('PYTHONUNBUFFERED', '1')
 
-    # Replace dataset path
-    if submission.dataset:
-        dataset_path = os.path.join(DATASET_CACHE_DIR, str(submission.dataset.uuid))
-        process_args = process_args.replace("$INPUT", dataset_path)
-        submission_name_centered = (" dataset: %s " % submission.dataset.name).center(80, "=")
-        cache.set("submission-%s-stdout" % submission_id, "\n%s\n\n\r" % submission_name_centered)
-    else:
-        no_dataset_msg_centered = " no dataset used ".center(80, "=")
-        cache.set("submission-%s-stdout" % submission_id, "\n%s\n\n\r" % no_dataset_msg_centered)
+    # If we don't have a dataset, pass in nothing
+    datasets = submission.datasets.all()
+    if len(datasets) == 0:
+        datasets = [None]
 
-    print "Running submission (%s) with args %s" % (submission_id, process_args)
+    # Run each dataset
+    for dataset in datasets:
+        # Reset args
+        process_args = config["run"]
 
-    signal.signal(signal.SIGALRM, _alarm_handler)
-    signal.alarm(60 * 10)  # require an "alarm" return signal within 10 min or force close
+        # Replace dataset path
+        if dataset:
+            dataset_path = _extract_dataset(dataset)
+            process_args = process_args.replace("$INPUT", dataset_path)
+            submission_name_centered = (" dataset: %s " % dataset.name).center(80, "=")
+            stdout_monitor.queue_message("\n%s\n\n\r" % submission_name_centered)
+        else:
+            no_dataset_msg_centered = " no dataset used ".center(80, "=")
+            stdout_monitor.queue_message("\n%s\n\n\r" % no_dataset_msg_centered)
 
-    try:
-        process = subprocess.Popen(
-            process_args.split(),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=0,
-            cwd=SUBMISSION_TEMP_STORAGE_DIR
-        )
-        stdout_monitor = BufferMonitor(process.stdout, "submission-%s-stdout" % submission_id)
-        stderr_monitor = BufferMonitor(process.stderr, "submission-%s-stderr" % submission_id)
+        print "Running submission (%s) with args %s on dataset %s" % (submission_id, process_args, dataset)
 
-        exit_code = None
-        while exit_code is None:
-            stdout_monitor.check_queue_then_cache()
-            stderr_monitor.check_queue_then_cache()
-            exit_code = process.poll()
+        signal.signal(signal.SIGALRM, _alarm_handler)
+        signal.alarm(60 * 10)  # require an "alarm" return signal within 10 min or force close
 
-    except (ValueError, OSError):
-        pass  # tried to communicate with dead process
+        try:
+            submission.started = timezone.now()
+            process = subprocess.Popen(
+                process_args.split(),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                bufsize=0,
+                cwd=SUBMISSION_TEMP_STORAGE_DIR
+            )
 
-    except ExecutionTimeLimitExceeded:
-        cache.set("submission-%s-stderr" % submission_id, "Time limit exceeded!")
-        process.kill()
+            stdout_monitor.monitor(process.stdout)
+            stderr_monitor.monitor(process.stderr)
 
-    except Exception:
-        # Catch any other exceptions and pass them back home
-        exception_details = traceback.format_exc()
-        cache.set("submission-%s-stderr" % submission_id, exception_details)
+            exit_code = None
+            while exit_code is None:
+                stdout_monitor.check_queue_then_cache()
+                stderr_monitor.check_queue_then_cache()
+                exit_code = process.poll()
 
-    finally:
-        # Reset the alarm, 0 means no "alarm" signal is required to respond
-        signal.alarm(0)
+        except (ValueError, OSError):
+            pass  # tried to communicate with dead process
+
+        except ExecutionTimeLimitExceeded:
+            cache.set("submission-%s-stderr" % submission_id, "Time limit exceeded!")
+            process.kill()
+
+        except Exception:
+            # Catch any other exceptions and pass them back home
+            exception_details = traceback.format_exc()
+            cache.set("submission-%s-stderr" % submission_id, exception_details)
+
+        finally:
+            submission.duration = timezone.now() - submission.started
+            submission.save()
+            # Reset the alarm, 0 means no "alarm" signal is required to respond
+            signal.alarm(0)
 
     # Sometimes app doesn't finish clearing output so let's clean up the buffers
     stderr_monitor.wait_until_cache_clear()  # stderr first so stdout end message arrives last!
+    stdout_monitor.queue_message("\ntotal duration -> %s\n\n" % submission.duration)
     # Put our EOF message at the end of the queue so it will for sure send last
-    stdout_monitor.queue.put("-%-%-%-%-END BRAIN SEQUENCE-%-%-%-%-")
+    stdout_monitor.queue_message("-%-%-%-%-END BRAIN SEQUENCE-%-%-%-%-")
     stdout_monitor.wait_until_cache_clear()

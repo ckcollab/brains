@@ -34,6 +34,7 @@ OUR_APPS = (
     "submissions",
     "datasets",
     "workers",
+    "pages",
 )
 INSTALLED_APPS = INSTALLED_APPS + OUR_APPS
 
