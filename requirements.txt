@@ -11,6 +11,6 @@ django-s3direct==0.3.11
 
 # for ML
 numpy
+scipy
 sklearn
 pillow
-scipy
