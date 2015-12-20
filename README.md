@@ -6,7 +6,6 @@ it thinks!
 
 #### install the [cli](http://github.com/dev-coop/brains-cli)
 ```
-# Install everything
 $ pip install brains
 $ mkdir experiment
 $ cd experiment
