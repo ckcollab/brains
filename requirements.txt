@@ -8,9 +8,4 @@ pyyaml==3.11
 psycopg2==2.6.1
 dj-static==0.0.6
 django-s3direct==0.3.11
-
-# for ML
-numpy
-scipy
-scikit-learn
 pillow
