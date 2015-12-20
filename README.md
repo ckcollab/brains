@@ -2,11 +2,57 @@
 
 it thinks!
 
-```python
+# using it
+
+install the [cli](http://github.com/dev-coop/brains-cli)
+```
+# Install everything
+$ pip install brains
+$ mkdir experiment
+$ cd experiment
+```
+
+make an example program
+```
+$ echo "print 'hello world'" >> run.py
+```
+
+configure brains
+```
+$ brains init
+Give me your brains, I mean name: Eric Carmichael
+Languages (python, ruby, etc.): python
+How do you run your script? eg, `python run.py $INPUT` ($INPUT is replaced with dataset path)
+: python run.py $INPUT
+
+Automatically including the follow files in brain contents:
+	run.py
+
+done! brains.yaml created
+
+$ cat brains.yaml
+contents:
+- run.py
+languages: 'python'
+name: 'Eric Carmichael'
+run: 'python run.py $INPUT'
+```
+
+run the program
+```
+$ brains push
+zipping...done
+sending to server...done
+
+Output:                                                                       
+
+=============================== no dataset used ================================
+
+hello world
 
 ```
 
-# setup
+# setup server
 
 ### local
 ```brew install memcached```
