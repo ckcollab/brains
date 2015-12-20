@@ -79,6 +79,7 @@ WSGI_APPLICATION = 'wsgi.application'
 
 # Default database, this file is .gitignored:
 if os.environ.get("DATBASE_URL"):
+    import dj_database_url
     DATABASES = {
         'default': dj_database_url.config()
     }
