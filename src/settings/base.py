@@ -174,7 +174,7 @@ AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
 S3DIRECT_REGION = 'us-west-2'
 S3DIRECT_DESTINATIONS = {
     # Allow staff users to upload any MIME type
-    'datasets': ('datasets/', lambda u: u.is_staff,),
+    'datasets': ('datasets', lambda u: u.is_staff,),
 }
 
 CACHES = {
