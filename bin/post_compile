@@ -1,1 +1,5 @@
+#!/usr/bin/env bash
+
+echo $DJANGO_SETTINGS_MODULE
+
 python manage.py migrate
