@@ -9,4 +9,4 @@ psycopg2==2.6.1
 dj-static==0.0.6
 django-s3direct==0.3.11
 pillow
-dj-database-url
+dj-database-url==0.3.0
