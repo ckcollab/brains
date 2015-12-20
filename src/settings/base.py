@@ -78,18 +78,12 @@ STATICFILES_FINDERS = (
 WSGI_APPLICATION = 'wsgi.application'
 
 # Default database, this file is .gitignored:
-if os.environ.get("DATBASE_URL"):
-    import dj_database_url
-    DATABASES = {
-        'default': dj_database_url.config()
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite'),
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': os.path.join(BASE_DIR, 'db.sqlite'),
-        }
-    }
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.8/topics/i18n/
