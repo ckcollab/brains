@@ -108,5 +108,6 @@ celery task runner
  - [ ] add cli `get` command
  - [ ] save stdout/stderr from submissions... streamed and lost right now...
  - [x] time submissions
+ - [ ] use codejail? https://github.com/edx/codejail
  - [x] support multiple datasets
     - [x] send cool stdout =============== <NAME> ===============

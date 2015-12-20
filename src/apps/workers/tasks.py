@@ -116,6 +116,29 @@ def _extract_dataset(dataset):
     return dataset_path
 
 
+
+
+
+
+def do_codejail_stuff():
+    # TODO: Make this work
+
+    #pip install docker-py
+    #output_generator = docker.logs("container", stdout=True, stderr=True, stream=True)
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
 ##############################################################################
 # The big kahuna, the submission runner
 @task
@@ -205,6 +228,7 @@ def run(submission_id):
             # Reset the alarm, 0 means no "alarm" signal is required to respond
             signal.alarm(0)
 
+    print "finished! duration:", submission.duration
     # Sometimes app doesn't finish clearing output so let's clean up the buffers
     stderr_monitor.wait_until_cache_clear()  # stderr first so stdout end message arrives last!
     stdout_monitor.queue_message("\ntotal duration -> %s\n\n" % submission.duration)
