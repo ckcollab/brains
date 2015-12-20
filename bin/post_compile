@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-echo $DJANGO_SETTINGS_MODULE
-echo "UHHHHHHH"
+set-env DJANGO_SETTINGS_MODULE "settings.production"
 
 python manage.py migrate
