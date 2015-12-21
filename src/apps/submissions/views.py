@@ -42,8 +42,8 @@ def _yield_submission_output(submission_id):
             }) + "\r"  # Note we add carriage return at the very end to signify the end of a message, useful
                        # because we're chunking data and sending it in parts, need to know when it ends!
 
-        # Heroku needs keepalive every 30s, so let's do it before that
-        if time.time() - last_message_time > 20:  # 25 is too high
+        # Heroku needs keepalive every 55s after initial, so let's do it before that
+        if time.time() - last_message_time > 10:
             print "yielding timeout message"
             last_message_time = time.time()
             #yield json.dumps({"keepalive": "keep the dream alive"}) + "\r"
