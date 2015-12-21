@@ -108,12 +108,10 @@ def _extract_submission_return_config(submission):
     return yaml.load(open(config_path).read(), Loader=yaml.loader.BaseLoader)
 
 
-def _extract_dataset_return_path(dataset, stdout_monitor):
+def _extract_dataset_return_path(dataset):
     """returns the dataset dir"""
     dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
     if not os.path.exists(dataset_path):
-        stdout_monitor.queue_message("dataset not cached, downloading %s" % dataset.name)
-
         # make sure cache dir exists
         if not os.path.exists(DATASET_CACHE_DIR):
             os.mkdir(DATASET_CACHE_DIR)
@@ -132,7 +130,9 @@ def _extract_dataset_return_path(dataset, stdout_monitor):
 
         # done with zip file, remove it
         os.remove(local_temp_file_name)
-    return dataset_path
+
+        created = True
+    return dataset_path, created
 
 
 
@@ -210,10 +210,12 @@ def run(submission_id):
 
         # Replace dataset path
         if dataset:
-            dataset_path = _extract_dataset_return_path(dataset, stdout_monitor)
+            dataset_path, created = _extract_dataset_return_path(dataset)
             process_args = process_args.replace("$INPUT", dataset_path)
             submission_name_centered = (" dataset: %s " % dataset.name).center(80, "=")
             stdout_monitor.queue_message("\n%s\n\n" % submission_name_centered)
+            if created:
+                stdout_monitor.queue_message("\n(dataset not cached on server! downloading...)\n")
         else:
             no_dataset_msg_centered = " no dataset used ".center(80, "=")
             stdout_monitor.queue_message("\n%s\n\n" % no_dataset_msg_centered)
