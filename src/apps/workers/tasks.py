@@ -113,7 +113,8 @@ def _extract_dataset_return_path(dataset):
     dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
     if not os.path.exists(dataset_path):
         # make sure cache dir exists
-        os.mkdir(DATASET_CACHE_DIR)
+        if not os.path.exists(DATASET_CACHE_DIR):
+            os.mkdir(DATASET_CACHE_DIR)
 
         # datasets are now URLs so we have to get the file from the path
         local_temp_file_name = os.path.join(DATASET_CACHE_DIR, "%s.zip" % str(dataset.uuid))

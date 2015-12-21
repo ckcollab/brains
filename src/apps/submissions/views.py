@@ -13,7 +13,7 @@ from workers.tasks import run
 
 def _yield_submission_output(submission_id):
     # yield something immediately for the connection to start on the cli for nicer printing
-    yield json.dumps({"keepalive": "keep the dream alive"})
+    yield json.dumps({"keepalive": "keep the dream alive"}) + "\r"
 
     last_message_time = time.time()
 
@@ -40,11 +40,11 @@ def _yield_submission_output(submission_id):
             }) + "\r"  # Note we add carriage return at the very end to signify the end of a message, useful
                        # because we're chunking data and sending it in parts, need to know when it ends!
 
-        # Heroku needs keepalive every 30s, so let's do every 25
-        if time.time() - last_message_time > 20:
+        # Heroku needs keepalive every 30s, so let's do it before that
+        if time.time() - last_message_time > 20:  # 25 is too high
             print "yielding timeout message"
             last_message_time = time.time()
-            yield json.dumps({"keepalive": "keep the dream alive"})
+            yield json.dumps({"keepalive": "keep the dream alive"}) + "\r"
 
         if stdout is not None and "-%-%-%-%-END BRAIN SEQUENCE-%-%-%-%-" in stdout:
             # We don't check for a timeout here... I think that's OK since it's terminated when user view
