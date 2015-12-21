@@ -1,4 +1,5 @@
 import os
+import requests
 import shutil
 import signal
 import subprocess
@@ -107,12 +108,24 @@ def _extract_submission_return_config(submission):
     return yaml.load(open(config_path).read(), Loader=yaml.loader.BaseLoader)
 
 
-def _extract_dataset(dataset):
+def _extract_dataset_return_path(dataset):
     """returns the dataset dir"""
     dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
     if not os.path.exists(dataset_path):
-        zip_file = ZipFile(dataset.file)
+        # datasets are now URLs so we have to get the file from the path
+        local_temp_file_name = os.path.join(DATASET_CACHE_DIR, "%s.zip" % str(dataset.uuid))
+        r = requests.get(dataset.file, stream=True)
+
+        # get it in chunks in case file is large
+        with open(local_temp_file_name, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        zip_file = ZipFile(local_temp_file_name)
         zip_file.extractall(dataset_path)
+
+        # done with zip file, remove it
+        os.remove(local_temp_file_name)
     return dataset_path
 
 
@@ -191,7 +204,7 @@ def run(submission_id):
 
         # Replace dataset path
         if dataset:
-            dataset_path = _extract_dataset(dataset)
+            dataset_path = _extract_dataset_return_path(dataset)
             process_args = process_args.replace("$INPUT", dataset_path)
             submission_name_centered = (" dataset: %s " % dataset.name).center(80, "=")
             stdout_monitor.queue_message("\n%s\n\n" % submission_name_centered)
