@@ -49,7 +49,9 @@ class BufferMonitor(object):
         thread.start()
 
     def queue_message(self, message):
-        self.queue.put("%s\r" % message)  # make sure we include 'end of message' character
+        #self.queue.put("%s\r" % message)  # make sure we include 'end of message' character
+        self.buffer += "%s\r" % message  # make sure we include 'end of message' character
+        self.set_cache_if_cache_clear()
 
     def set_cache_if_cache_clear(self):
         # Check if cache is empty, if so we can put something there!
