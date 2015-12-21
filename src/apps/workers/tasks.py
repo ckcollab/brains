@@ -114,7 +114,7 @@ def _extract_dataset_return_path(dataset, stdout_monitor):
     """returns the dataset dir"""
     dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
     if not os.path.exists(dataset_path):
-        stdout_monitor.queue_message("\ndataset not cached, downloading %s...\n" % dataset.name)
+        stdout_monitor.queue_message("\ndataset not cached, downloading %s...\n\n" % dataset.name)
 
         # make sure cache dir exists
         if not os.path.exists(DATASET_CACHE_DIR):
