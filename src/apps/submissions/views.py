@@ -13,9 +13,10 @@ from workers.tasks import run
 
 def _yield_submission_output(submission_id):
     # yield something immediately for the connection to start on the cli for nicer printing
-    yield json.dumps({
-        "keepalive": "1" * 1024 * 50  # send a bunch of data to flush buffers...?
-    }) + "\r"
+    # yield json.dumps({
+    #     "keepalive": "1" * 1024 * 50  # send a bunch of data to flush buffers...?
+    # }) + "\r"
+    yield ""
 
     last_message_time = time.time()
 
@@ -46,10 +47,10 @@ def _yield_submission_output(submission_id):
         if time.time() - last_message_time > 10:
             print "yielding timeout message"
             last_message_time = time.time()
-            #yield json.dumps({"keepalive": "keep the dream alive"}) + "\r"
-            yield json.dumps({
-                "keepalive": "1" * 1024 * 50  # send a bunch of data to flush buffers...?
-            }) + "\r"
+            yield json.dumps({"keepalive": "keep the dream alive"}) + "\r"
+            # yield json.dumps({
+            #     "keepalive": "1" * 1024 * 50  # send a bunch of data to flush buffers...?
+            # }) + "\r"
 
         if stdout is not None and "-%-%-%-%-END BRAIN SEQUENCE-%-%-%-%-" in stdout:
             # We don't check for a timeout here... I think that's OK since it's terminated when user view

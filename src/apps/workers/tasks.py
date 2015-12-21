@@ -183,15 +183,6 @@ def run(submission_id):
         cache.set("submission-%s-stderr" % submission_id, "Could not find a submission with this ID (%s)" % submission_id)
         return
 
-    # try:
-    #     if dataset_ids:
-    #         dataset = Dataset.objects.get(pk=dataset_id)
-    #     else:
-    #         dataset = None
-    # except Submission.DoesNotExist:
-    #     cache.set("submission-%s-stderr" % submission_id, "Could not find a dataset with this ID (%s)" % dataset_id)
-    #     return
-
     stdout_monitor = BufferMonitor("submission-%s-stdout" % submission_id)
     stderr_monitor = BufferMonitor("submission-%s-stderr" % submission_id)
 
