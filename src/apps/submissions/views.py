@@ -12,7 +12,8 @@ from workers.tasks import run
 
 
 def _yield_submission_output(submission_id):
-    yield ""  # yield something immediately for the connection to start on the cli for nicer printing
+    # yield something immediately for the connection to start on the cli for nicer printing
+    yield json.dumps({"keepalive": "keep the dream alive"})
 
     last_message_time = time.time()
 
