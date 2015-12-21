@@ -108,10 +108,12 @@ def _extract_submission_return_config(submission):
     return yaml.load(open(config_path).read(), Loader=yaml.loader.BaseLoader)
 
 
-def _extract_dataset_return_path(dataset):
+def _extract_dataset_return_path(dataset, stdout_monitor):
     """returns the dataset dir"""
     dataset_path = os.path.join(DATASET_CACHE_DIR, str(dataset.uuid))
     if not os.path.exists(dataset_path):
+        stdout_monitor.queue_message("dataset not cached, downloading %s" % dataset.name)
+
         # make sure cache dir exists
         if not os.path.exists(DATASET_CACHE_DIR):
             os.mkdir(DATASET_CACHE_DIR)
@@ -208,7 +210,7 @@ def run(submission_id):
 
         # Replace dataset path
         if dataset:
-            dataset_path = _extract_dataset_return_path(dataset)
+            dataset_path = _extract_dataset_return_path(dataset, stdout_monitor)
             process_args = process_args.replace("$INPUT", dataset_path)
             submission_name_centered = (" dataset: %s " % dataset.name).center(80, "=")
             stdout_monitor.queue_message("\n%s\n\n" % submission_name_centered)
