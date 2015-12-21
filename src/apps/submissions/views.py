@@ -42,6 +42,7 @@ def _yield_submission_output(submission_id):
 
         # Heroku needs keepalive every 30s, so let's do every 25
         if time.time() - last_message_time > 25:
+            print "yielding timeout message"
             last_message_time = time.time()
             yield json.dumps({"keepalive": "keep the dream alive"})
 
