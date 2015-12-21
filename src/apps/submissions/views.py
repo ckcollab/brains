@@ -14,7 +14,7 @@ from workers.tasks import run
 def _yield_submission_output(submission_id):
     # yield something immediately for the connection to start on the cli for nicer printing
     yield json.dumps({
-        "keepalive": "keep the dream alive" * 100  # send a bunch of data to flush buffers...?
+        "keepalive": "1" * 1024 * 50  # send a bunch of data to flush buffers...?
     }) + "\r"
 
     last_message_time = time.time()
